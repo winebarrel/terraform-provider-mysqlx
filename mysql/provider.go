@@ -100,15 +100,15 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"mysql_tables": dataSourceTables(),
+			"mysqlx_tables": dataSourceTables(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"mysql_database":      resourceDatabase(),
-			"mysql_grant":         resourceGrant(),
-			"mysql_role":          resourceRole(),
-			"mysql_user":          resourceUser(),
-			"mysql_user_password": resourceUserPassword(),
+			"mysqlx_database":      resourceDatabase(),
+			"mysqlx_grant":         resourceGrant(),
+			"mysqlx_role":          resourceRole(),
+			"mysqlx_user":          resourceUser(),
+			"mysqlx_user_password": resourceUserPassword(),
 		},
 
 		ConfigureFunc: providerConfigure,
