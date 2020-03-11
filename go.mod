@@ -1,6 +1,7 @@
 module github.com/terraform-providers/terraform-provider-mysqlx
 
 require (
+	github.com/aws/aws-sdk-go v1.19.39
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/hashicorp/go-version v1.2.0
