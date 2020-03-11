@@ -3,12 +3,17 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/go-sql-driver/mysql"
 	"github.com/hashicorp/go-version"
 
@@ -29,6 +34,7 @@ type MySQLConfiguration struct {
 	Config          *mysql.Config
 	MaxConnLifetime time.Duration
 	MaxOpenConns    int
+	SSM             *ssm.SSM
 }
 
 func Provider() terraform.ResourceProvider {
@@ -58,6 +64,12 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MYSQL_PASSWORD", nil),
+			},
+
+			"ssm_parameter_password": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"password"},
 			},
 
 			"proxy": {
@@ -97,6 +109,32 @@ func Provider() terraform.ResourceProvider {
 				Default:      nativePasswords,
 				ValidateFunc: validation.StringInSlice([]string{cleartextPasswords, nativePasswords}, true),
 			},
+
+			"use_parameter_store": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
+			"access_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+
+			"secret_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+
+			"region": {
+				Type:     schema.TypeString,
+				Required: true,
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+					"AWS_REGION",
+					"AWS_DEFAULT_REGION",
+				}, nil),
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -104,11 +142,12 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"mysqlx_database":      resourceDatabase(),
-			"mysqlx_grant":         resourceGrant(),
-			"mysqlx_role":          resourceRole(),
-			"mysqlx_user":          resourceUser(),
-			"mysqlx_user_password": resourceUserPassword(),
+			"mysqlx_database":                    resourceDatabase(),
+			"mysqlx_grant":                       resourceGrant(),
+			"mysqlx_role":                        resourceRole(),
+			"mysqlx_user":                        resourceUser(),
+			"mysqlx_user_password":               resourceUserPassword(),
+			"mysqlx_ssm_parameter_user_password": resourceSSMParameterUserPassword(),
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -143,11 +182,37 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return dialer.Dial("tcp", network)
 	})
 
-	return &MySQLConfiguration{
+	var ssmSvc *ssm.SSM
+
+	if d.Get("use_parameter_store").(bool) {
+		ssmSvc, err = buildSSM(d)
+
+		if err != nil {
+			return nil, err
+		}
+
+		ssmParameterPassword := d.Get("ssm_parameter_password").(string)
+
+		if ssmParameterPassword != "" {
+			paramPass, err := getParameter(ssmSvc, ssmParameterPassword)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.Passwd = paramPass
+		}
+
+	}
+
+	mysqlConf := &MySQLConfiguration{
 		Config:          &conf,
 		MaxConnLifetime: time.Duration(d.Get("max_conn_lifetime_sec").(int)) * time.Second,
 		MaxOpenConns:    d.Get("max_open_conns").(int),
-	}, nil
+		SSM:             ssmSvc,
+	}
+
+	return mysqlConf, nil
 }
 
 var identQuoteReplacer = strings.NewReplacer("`", "``")
@@ -226,4 +291,50 @@ func connectToMySQL(conf *MySQLConfiguration) (*sql.DB, error) {
 	db.SetConnMaxLifetime(conf.MaxConnLifetime)
 	db.SetMaxOpenConns(conf.MaxOpenConns)
 	return db, nil
+}
+
+func buildSSM(d *schema.ResourceData) (*ssm.SSM, error) {
+	accessKey := d.Get("access_key").(string)
+	secretKey := d.Get("secret_key").(string)
+	region := d.Get("region").(string)
+	config := aws.NewConfig().WithRegion(region)
+
+	if accessKey != "" && secretKey != "" {
+		creds := credentials.NewStaticCredentials(accessKey, secretKey, "")
+		config = config.WithCredentials(creds)
+	} else {
+		config = config.WithCredentialsChainVerboseErrors(true)
+	}
+
+	sess, err := session.NewSession()
+
+	if err != nil {
+		return nil, err
+	}
+
+	svc := ssm.New(sess, config)
+
+	return svc, nil
+}
+
+func getParameter(svc *ssm.SSM, name string) (string, error) {
+	if svc == nil {
+		return "", fmt.Errorf("AWS SSM is not configured")
+	}
+
+	paramInput := &ssm.GetParameterInput{
+		Name:           aws.String(name),
+		WithDecryption: aws.Bool(true),
+	}
+
+	log.Printf("[DEBUG] Reading SSM Parameter: %s", paramInput)
+	resp, err := svc.GetParameter(paramInput)
+
+	if err != nil {
+		return "", fmt.Errorf("Error describing SSM parameter: %s", err)
+	}
+
+	param := resp.Parameter
+
+	return *param.Value, nil
 }
