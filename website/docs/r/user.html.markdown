@@ -79,9 +79,4 @@ No further attributes are exported.
 
 ## Import
 
-Users can be imported using their name, e.g.
-
-```
-$ terraform import mysql_user.example my-example-username
-```
-
+Users cannot be imported.
