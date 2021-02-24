@@ -8,8 +8,6 @@ Terraform Provider
 Usage
 -----
 
-For Terraform 0.13+ compatibility, the configuration should specify version 1.6 or higher:
-
 ```hcl
 terraform {
   required_providers {
