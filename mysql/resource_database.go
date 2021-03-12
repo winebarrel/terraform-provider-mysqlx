@@ -22,7 +22,7 @@ func resourceDatabase() *schema.Resource {
 		Read:   ReadDatabase,
 		Delete: DeleteDatabase,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: ImportDatabase,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -193,4 +193,14 @@ func extractIdentAfter(sql string, keyword string) string {
 	}
 
 	return ""
+}
+
+func ImportDatabase(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	err := ReadDatabase(d, meta)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
