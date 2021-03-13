@@ -381,6 +381,7 @@ func DeleteGrant(d *schema.ResourceData, meta interface{}) error {
 		_, err = db.Exec(sql)
 		if err != nil {
 			if regexp.MustCompile("Error 1141:").MatchString(err.Error()) {
+				// Error 1141: There is no such grant defined for user
 				log.Printf("[WARN] error revoking GRANT (%s): %s", sql, err)
 				return nil
 			} else {
