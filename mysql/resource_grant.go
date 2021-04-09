@@ -110,7 +110,11 @@ func flattenList(list []interface{}, template string) string {
 
 func formatDatabaseName(database string) string {
 	if strings.Compare(database, "*") != 0 && !strings.HasSuffix(database, "`") {
-		return fmt.Sprintf("`%s`", database)
+		database = fmt.Sprintf("`%s`", database)
+
+		if strings.HasPrefix(database, "`PROCEDURE ") {
+			database = strings.Replace(database, "`PROCEDURE ", "PROCEDURE `", 1)
+		}
 	}
 
 	return database
