@@ -28,10 +28,10 @@ func CreateRole(d *schema.ResourceData, meta interface{}) error {
 
 	roleName := d.Get("name").(string)
 
-	sql := fmt.Sprintf("CREATE ROLE '%s'", roleName)
-	log.Printf("[DEBUG] SQL: %s", sql)
+	stmtSQL := fmt.Sprintf("CREATE ROLE '%s'", roleName)
+	log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-	_, err := db.Exec(sql)
+	_, err := db.Exec(stmtSQL)
 	if err != nil {
 		return fmt.Errorf("error creating role: %s", err)
 	}
@@ -44,10 +44,10 @@ func CreateRole(d *schema.ResourceData, meta interface{}) error {
 func ReadRole(d *schema.ResourceData, meta interface{}) error {
 	db := meta.(*MySQLConfiguration).Db
 
-	sql := fmt.Sprintf("SHOW GRANTS FOR '%s'", d.Id())
-	log.Printf("[DEBUG] SQL: %s", sql)
+	stmtSQL := fmt.Sprintf("SHOW GRANTS FOR '%s'", d.Id())
+	log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-	_, err := db.Exec(sql)
+	_, err := db.Exec(stmtSQL)
 	if err != nil {
 		log.Printf("[WARN] Role (%s) not found; removing from state", d.Id())
 		d.SetId("")
@@ -62,10 +62,10 @@ func ReadRole(d *schema.ResourceData, meta interface{}) error {
 func DeleteRole(d *schema.ResourceData, meta interface{}) error {
 	db := meta.(*MySQLConfiguration).Db
 
-	sql := fmt.Sprintf("DROP ROLE '%s'", d.Get("name").(string))
-	log.Printf("[DEBUG] SQL: %s", sql)
+	stmtSQL := fmt.Sprintf("DROP ROLE '%s'", d.Get("name").(string))
+	log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-	_, err := db.Exec(sql)
+	_, err := db.Exec(stmtSQL)
 	if err != nil {
 		return err
 	}

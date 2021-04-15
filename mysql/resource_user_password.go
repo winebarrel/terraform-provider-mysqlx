@@ -84,7 +84,7 @@ func SetUserPassword(d *schema.ResourceData, meta interface{}) error {
 			password)
 	}
 
-	log.Println("Executing query:", stmtSQL)
+	log.Println("Executing statement:", stmtSQL)
 	_, err = db.Exec(stmtSQL)
 	if err != nil {
 		return err

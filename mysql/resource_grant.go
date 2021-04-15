@@ -322,11 +322,11 @@ func updatePrivileges(d *schema.ResourceData, db *sql.DB, user string, database 
 			grants[i] = v.(string)
 		}
 
-		sql := fmt.Sprintf("GRANT %s ON %s.%s TO %s", strings.Join(grants, ","), database, table, user)
+		stmtSQL := fmt.Sprintf("GRANT %s ON %s.%s TO %s", strings.Join(grants, ","), database, table, user)
 
-		log.Printf("[DEBUG] SQL: %s", sql)
+		log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-		if _, err := db.Exec(sql); err != nil {
+		if _, err := db.Exec(stmtSQL); err != nil {
 			return err
 		}
 	}
@@ -338,11 +338,11 @@ func updatePrivileges(d *schema.ResourceData, db *sql.DB, user string, database 
 			revokes[i] = v.(string)
 		}
 
-		sql := fmt.Sprintf("REVOKE %s ON %s.%s FROM %s", strings.Join(revokes, ","), database, table, user)
+		stmtSQL := fmt.Sprintf("REVOKE %s ON %s.%s FROM %s", strings.Join(revokes, ","), database, table, user)
 
-		log.Printf("[DEBUG] SQL: %s", sql)
+		log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-		if _, err := db.Exec(sql); err != nil {
+		if _, err := db.Exec(stmtSQL); err != nil {
 			return err
 		}
 	}
@@ -460,8 +460,8 @@ func restoreGrant(user string, host string, grant *MySQLGrant) *schema.ResourceD
 func showGrants(db *sql.DB, user string) ([]*MySQLGrant, error) {
 	grants := []*MySQLGrant{}
 
-	sql := fmt.Sprintf("SHOW GRANTS FOR %s", user)
-	rows, err := db.Query(sql)
+	stmtSQL := fmt.Sprintf("SHOW GRANTS FOR %s", user)
+	rows, err := db.Query(stmtSQL)
 
 	if err != nil {
 		return nil, err

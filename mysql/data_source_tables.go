@@ -35,15 +35,15 @@ func ShowTables(d *schema.ResourceData, meta interface{}) error {
 	database := d.Get("database").(string)
 	pattern := d.Get("pattern").(string)
 
-	sql := fmt.Sprintf("SHOW TABLES FROM %s", quoteIdentifier(database))
+	stmtSQL := fmt.Sprintf("SHOW TABLES FROM %s", quoteIdentifier(database))
 
 	if pattern != "" {
-		sql += fmt.Sprintf(" LIKE '%s'", pattern)
+		stmtSQL += fmt.Sprintf(" LIKE '%s'", pattern)
 	}
 
-	log.Printf("[DEBUG] SQL: %s", sql)
+	log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
-	rows, err := db.Query(sql)
+	rows, err := db.Query(stmtSQL)
 
 	if err != nil {
 		return err

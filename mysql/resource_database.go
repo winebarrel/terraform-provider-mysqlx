@@ -87,7 +87,7 @@ func ReadDatabase(d *schema.ResourceData, meta interface{}) error {
 	name := d.Id()
 	stmtSQL := "SHOW CREATE DATABASE " + quoteIdentifier(name)
 
-	log.Println("Executing query:", stmtSQL)
+	log.Println("Executing statement:", stmtSQL)
 	var createSQL, _database string
 	err := db.QueryRow(stmtSQL).Scan(&_database, &createSQL)
 	if err != nil {

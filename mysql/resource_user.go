@@ -172,7 +172,7 @@ func UpdateUser(d *schema.ResourceData, meta interface{}) error {
 				newpw.(string))
 		}
 
-		log.Println("Executing query:", stmtSQL)
+		log.Println("Executing statement:", stmtSQL)
 		_, err = db.Exec(stmtSQL)
 		if err != nil {
 			return err
@@ -193,7 +193,7 @@ func UpdateUser(d *schema.ResourceData, meta interface{}) error {
 			d.Get("host").(string),
 			fmt.Sprintf(" REQUIRE %s", d.Get("tls_option").(string)))
 
-		log.Println("Executing query:", stmtSQL)
+		log.Println("Executing statement:", stmtSQL)
 		_, err := db.Exec(stmtSQL)
 		if err != nil {
 			return err
