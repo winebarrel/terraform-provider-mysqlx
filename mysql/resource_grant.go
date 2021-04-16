@@ -315,22 +315,6 @@ func updatePrivileges(d *schema.ResourceData, db *sql.DB, user string, database 
 	grantIfs := newPrivs.Difference(oldPrivs).List()
 	revokeIfs := oldPrivs.Difference(newPrivs).List()
 
-	if len(grantIfs) > 0 {
-		grants := make([]string, len(grantIfs))
-
-		for i, v := range grantIfs {
-			grants[i] = v.(string)
-		}
-
-		stmtSQL := fmt.Sprintf("GRANT %s ON %s.%s TO %s", strings.Join(grants, ","), database, table, user)
-
-		log.Printf("[DEBUG] SQL: %s", stmtSQL)
-
-		if _, err := db.Exec(stmtSQL); err != nil {
-			return err
-		}
-	}
-
 	if len(revokeIfs) > 0 {
 		revokes := make([]string, len(revokeIfs))
 
@@ -339,6 +323,22 @@ func updatePrivileges(d *schema.ResourceData, db *sql.DB, user string, database 
 		}
 
 		stmtSQL := fmt.Sprintf("REVOKE %s ON %s.%s FROM %s", strings.Join(revokes, ","), database, table, user)
+
+		log.Printf("[DEBUG] SQL: %s", stmtSQL)
+
+		if _, err := db.Exec(stmtSQL); err != nil {
+			return err
+		}
+	}
+
+	if len(grantIfs) > 0 {
+		grants := make([]string, len(grantIfs))
+
+		for i, v := range grantIfs {
+			grants[i] = v.(string)
+		}
+
+		stmtSQL := fmt.Sprintf("GRANT %s ON %s.%s TO %s", strings.Join(grants, ","), database, table, user)
 
 		log.Printf("[DEBUG] SQL: %s", stmtSQL)
 
