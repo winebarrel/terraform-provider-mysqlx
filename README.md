@@ -13,7 +13,7 @@ terraform {
   required_providers {
     mysql = {
       source  = "winebarrel/mysql"
-      version = "~> 1.10.0"
+      version = "~> 1.10.2"
     }
   }
   required_version = ">= 0.13"
