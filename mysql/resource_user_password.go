@@ -45,7 +45,11 @@ func resourceUserPassword() *schema.Resource {
 }
 
 func SetUserPassword(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	uuid, err := uuid.NewV4()
 	if err != nil {

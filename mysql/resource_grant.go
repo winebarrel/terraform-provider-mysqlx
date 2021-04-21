@@ -153,7 +153,11 @@ func supportsRoles(db *sql.DB) (bool, error) {
 }
 
 func CreateGrant(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	hasRoles, err := supportsRoles(db)
 	if err != nil {
@@ -229,7 +233,11 @@ func CreateGrant(d *schema.ResourceData, meta interface{}) error {
 }
 
 func ReadGrant(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	hasRoles, err := supportsRoles(db)
 	if err != nil {
@@ -276,7 +284,11 @@ func ReadGrant(d *schema.ResourceData, meta interface{}) error {
 }
 
 func UpdateGrant(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	hasRoles, err := supportsRoles(db)
 
@@ -351,7 +363,11 @@ func updatePrivileges(d *schema.ResourceData, db *sql.DB, user string, database 
 }
 
 func DeleteGrant(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	database := formatDatabaseName(d.Get("database").(string))
 
@@ -422,7 +438,11 @@ func ImportGrant(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceDa
 	user := userHost[0]
 	host := userHost[1]
 
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return nil, err
+	}
 
 	grants, err := showGrants(db, fmt.Sprintf("'%s'@'%s'", user, host))
 

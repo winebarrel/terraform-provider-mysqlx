@@ -152,22 +152,12 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return dialer.Dial("tcp", network)
 	})
 
-	mysqlConf := &MySQLConfiguration{
+	return &MySQLConfiguration{
 		Config:                 &conf,
 		MaxConnLifetime:        time.Duration(d.Get("max_conn_lifetime_sec").(int)) * time.Second,
 		MaxOpenConns:           d.Get("max_open_conns").(int),
 		ConnectRetryTimeoutSec: time.Duration(d.Get("connect_retry_timeout_sec").(int)) * time.Second,
-	}
-
-	db, err := connectToMySQL(mysqlConf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	mysqlConf.Db = db
-
-	return mysqlConf, nil
+	}, nil
 }
 
 var identQuoteReplacer = strings.NewReplacer("`", "``")

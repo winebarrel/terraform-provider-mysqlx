@@ -47,12 +47,16 @@ func resourceDatabase() *schema.Resource {
 }
 
 func CreateDatabase(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	stmtSQL := databaseConfigSQL("CREATE", d)
 	log.Println("Executing statement:", stmtSQL)
 
-	_, err := db.Exec(stmtSQL)
+	_, err = db.Exec(stmtSQL)
 	if err != nil {
 		return err
 	}
@@ -63,12 +67,16 @@ func CreateDatabase(d *schema.ResourceData, meta interface{}) error {
 }
 
 func UpdateDatabase(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	stmtSQL := databaseConfigSQL("ALTER", d)
 	log.Println("Executing statement:", stmtSQL)
 
-	_, err := db.Exec(stmtSQL)
+	_, err = db.Exec(stmtSQL)
 	if err != nil {
 		return err
 	}
@@ -77,7 +85,11 @@ func UpdateDatabase(d *schema.ResourceData, meta interface{}) error {
 }
 
 func ReadDatabase(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	// This is kinda flimsy-feeling, since it depends on the formatting
 	// of the SHOW CREATE DATABASE output... but this data doesn't seem
@@ -89,7 +101,7 @@ func ReadDatabase(d *schema.ResourceData, meta interface{}) error {
 
 	log.Println("Executing statement:", stmtSQL)
 	var createSQL, _database string
-	err := db.QueryRow(stmtSQL).Scan(&_database, &createSQL)
+	err = db.QueryRow(stmtSQL).Scan(&_database, &createSQL)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == unknownDatabaseErrCode {
@@ -146,13 +158,17 @@ func ReadDatabase(d *schema.ResourceData, meta interface{}) error {
 }
 
 func DeleteDatabase(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := connectToMySQL(meta.(*MySQLConfiguration))
+
+	if err != nil {
+		return err
+	}
 
 	name := d.Id()
 	stmtSQL := "DROP DATABASE " + quoteIdentifier(name)
 	log.Println("Executing statement:", stmtSQL)
 
-	_, err := db.Exec(stmtSQL)
+	_, err = db.Exec(stmtSQL)
 	if err == nil {
 		d.SetId("")
 	}
