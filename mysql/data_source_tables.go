@@ -30,7 +30,10 @@ func dataSourceTables() *schema.Resource {
 }
 
 func ShowTables(d *schema.ResourceData, meta interface{}) error {
-	db := meta.(*MySQLConfiguration).Db
+	db, err := meta.(*MySQLConfiguration).GetDbConn()
+	if err != nil {
+		return err
+	}
 
 	database := d.Get("database").(string)
 	pattern := d.Get("pattern").(string)
