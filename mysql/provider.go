@@ -27,21 +27,21 @@ const (
 
 type MySQLConfiguration struct {
 	Config                 *mysql.Config
-	Db                     *sql.DB
 	MaxConnLifetime        time.Duration
 	MaxOpenConns           int
 	ConnectRetryTimeoutSec time.Duration
+	db                     *sql.DB
 }
 
 func (c *MySQLConfiguration) GetDbConn() (*sql.DB, error) {
-	if c.Db == nil {
+	if c.db == nil {
 		db, err := connectToMySQL(c)
 		if err != nil {
 			return nil, err
 		}
-		c.Db = db
+		c.db = db
 	}
-	return c.Db, nil
+	return c.db, nil
 }
 
 func Provider() terraform.ResourceProvider {
@@ -168,7 +168,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		MaxConnLifetime:        time.Duration(d.Get("max_conn_lifetime_sec").(int)) * time.Second,
 		MaxOpenConns:           d.Get("max_open_conns").(int),
 		ConnectRetryTimeoutSec: time.Duration(d.Get("connect_retry_timeout_sec").(int)) * time.Second,
-		Db:                     nil,
+		db:                     nil,
 	}
 
 	return mysqlConf, nil
