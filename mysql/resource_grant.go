@@ -303,7 +303,7 @@ func UpdateGrant(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	database := d.Get("database").(string)
+	database := formatDatabaseName(d.Get("database").(string))
 	table := d.Get("table").(string)
 
 	if d.HasChange("privileges") {
