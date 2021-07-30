@@ -46,6 +46,67 @@ func TestAccGrant(t *testing.T) {
 	})
 }
 
+func TestAccGrant_grantOption(t *testing.T) {
+	randInt := rand.Intn(100)
+	db1 := fmt.Sprintf("tf-test-%d", randInt)
+	db2 := fmt.Sprintf("tf-test-%d", randInt+1)
+
+	config := fmt.Sprintf(`
+resource "mysql_database" "db1" {
+  name = "%s"
+}
+
+resource "mysql_database" "db2" {
+  name = "%s"
+}
+
+resource "mysql_user" "test" {
+  user     = "jdoe-%d"
+  host     = "example.com"
+}
+
+resource "mysql_grant" "test_db1" {
+  user       = mysql_user.test.user
+  host       = mysql_user.test.host
+  database   = mysql_database.db1.name
+  privileges = ["SELECT"]
+}
+
+resource "mysql_grant" "test_db2" {
+  user       = mysql_user.test.user
+  host       = mysql_user.test.host
+  database   = mysql_database.db2.name
+  privileges = ["SELECT"]
+  grant = true
+}
+`, db1, db2, randInt)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccGrantCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccPrivilegeExists("mysql_grant.test_db1", "SELECT"),
+					resource.TestCheckResourceAttr("mysql_grant.test_db1", "user", fmt.Sprintf("jdoe-%d", randInt)),
+					resource.TestCheckResourceAttr("mysql_grant.test_db1", "host", "example.com"),
+					resource.TestCheckResourceAttr("mysql_grant.test_db1", "database", db1),
+					resource.TestCheckResourceAttr("mysql_grant.test_db1", "table", "*"),
+					resource.TestCheckResourceAttr("mysql_grant.test_db1", "grant", "false"),
+
+					testAccPrivilegeExists("mysql_grant.test_db2", "SELECT"),
+					resource.TestCheckResourceAttr("mysql_grant.test_db2", "user", fmt.Sprintf("jdoe-%d", randInt)),
+					resource.TestCheckResourceAttr("mysql_grant.test_db2", "host", "example.com"),
+					resource.TestCheckResourceAttr("mysql_grant.test_db2", "database", db2),
+					resource.TestCheckResourceAttr("mysql_grant.test_db2", "grant", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccGrant_role(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	dbName := fmt.Sprintf("tf-test-%d", rand.Intn(100))

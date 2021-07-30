@@ -268,10 +268,10 @@ func ReadGrant(d *schema.ResourceData, meta interface{}) error {
 	for _, grant := range grants {
 		if grant.Database == database && grant.Table == table {
 			privileges = grant.Privileges
-		}
-
-		if grant.Grant {
-			grantOption = true
+			if grant.Grant {
+				grantOption = true
+			}
+			break
 		}
 	}
 
