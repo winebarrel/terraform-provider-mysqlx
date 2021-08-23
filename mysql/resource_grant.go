@@ -432,7 +432,7 @@ func ImportGrant(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceDa
 	}
 
 	user := d.Id()[0:lastSeparatorIndex]
-	host := d.Id()[lastSeparatorIndex:]
+	host := d.Id()[lastSeparatorIndex+1:]
 
 	db, err := meta.(*MySQLConfiguration).GetDbConn()
 	if err != nil {

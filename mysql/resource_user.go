@@ -259,7 +259,7 @@ func ImportUser(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceDat
 	}
 
 	user := d.Id()[0:lastSeparatorIndex]
-	host := d.Id()[lastSeparatorIndex:]
+	host := d.Id()[lastSeparatorIndex+1:]
 
 	db, err := meta.(*MySQLConfiguration).GetDbConn()
 	if err != nil {
