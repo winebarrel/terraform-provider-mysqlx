@@ -1,8 +1,10 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"regexp"
@@ -17,6 +19,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
+	gocloudmysql "gocloud.dev/mysql"
+	_ "gocloud.dev/mysql/awsmysql"
+	_ "gocloud.dev/mysql/gcpmysql"
 	"golang.org/x/net/proxy"
 )
 
@@ -27,6 +32,7 @@ const (
 
 type MySQLConfiguration struct {
 	Config                 *mysql.Config
+	Scheme                 string
 	MaxConnLifetime        time.Duration
 	MaxOpenConns           int
 	ConnectRetryTimeoutSec time.Duration
@@ -47,6 +53,16 @@ func (c *MySQLConfiguration) GetDbConn() (*sql.DB, error) {
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"scheme": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "mysql",
+				ValidateFunc: validation.StringInSlice([]string{
+					"mysql",
+					"awsmysql",
+					"gcpmysql",
+				}, false),
+			},
 			"endpoint": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -164,6 +180,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	})
 
 	mysqlConf := &MySQLConfiguration{
+		Scheme:                 d.Get("scheme").(string),
 		Config:                 &conf,
 		MaxConnLifetime:        time.Duration(d.Get("max_conn_lifetime_sec").(int)) * time.Second,
 		MaxOpenConns:           d.Get("max_open_conns").(int),
@@ -220,18 +237,55 @@ func serverVersionString(db *sql.DB) (string, error) {
 	return versionString, nil
 }
 
+func (conf *MySQLConfiguration) connStr(params string) string {
+	host := conf.Config.Addr
+	re := regexp.MustCompile(`(.+):([0-9]+)$`)
+	matches := re.FindStringSubmatch(host)
+	port := "3306"
+	if matches != nil {
+		host = matches[1]
+		port = matches[2]
+	}
+	// For GCP, support both project/region/instance and project:region:instance
+	// (The second one allows to use the output of google_sql_database_instance as host
+	if conf.Scheme == "gcpmysql" {
+		host = strings.ReplaceAll(host, ":", "/")
+	}
+
+	connStr := fmt.Sprintf(
+		"%s://%s:%s@%s:%s/mysql?%s",
+		conf.Scheme,
+		url.QueryEscape(conf.Config.User),
+		url.QueryEscape(conf.Config.Passwd),
+		host,
+		port,
+		params,
+	)
+	return connStr
+}
+
 func connectToMySQL(conf *MySQLConfiguration) (*sql.DB, error) {
 
 	dsn := conf.Config.FormatDSN()
+	log.Println("DSN is", dsn)
 	var db *sql.DB
 	var err error
+	if conf.Scheme != "mysql" {
+		dsn = conf.connStr(dsn[strings.LastIndex(dsn, "?")+1:])
+		log.Println("DSN is now", dsn)
+	}
 
 	// When provisioning a database server there can often be a lag between
 	// when Terraform thinks it's available and when it is actually available.
 	// This is particularly acute when provisioning a server and then immediately
 	// trying to provision a database on it.
 	retryError := resource.Retry(conf.ConnectRetryTimeoutSec, func() *resource.RetryError {
-		db, err = sql.Open("mysql", dsn)
+		if conf.Scheme == "mysql" {
+			db, err = sql.Open("mysql", dsn)
+		} else {
+			db, err = gocloudmysql.Open(context.Background(), dsn)
+		}
+
 		if err != nil {
 			return resource.RetryableError(err)
 		}
