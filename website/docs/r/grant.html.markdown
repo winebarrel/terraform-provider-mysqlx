@@ -84,3 +84,11 @@ The following arguments are supported:
 ## Attributes Reference
 
 No further attributes are exported.
+
+## Import
+
+Grants can be imported using the username@host, e.g.
+
+```
+$ terraform import mysql_grant.example-grant example-username@host
+```
