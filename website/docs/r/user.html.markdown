@@ -76,3 +76,11 @@ The following attributes are exported:
 ## Attributes Reference
 
 No further attributes are exported.
+
+## Import
+
+Users can be imported using the username@host, e.g.
+
+```
+$ terraform import mysql_user.example-username example-username@host
+```
