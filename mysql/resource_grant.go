@@ -211,7 +211,7 @@ func CreateGrant(d *schema.ResourceData, meta interface{}) error {
 		stmtSQL += fmt.Sprintf(" REQUIRE %s", d.Get("tls_option").(string))
 	}
 
-	if !hasRoles && !isRole && d.Get("grant").(bool) {
+	if !isRole && d.Get("grant").(bool) {
 		stmtSQL += " WITH GRANT OPTION"
 	}
 
