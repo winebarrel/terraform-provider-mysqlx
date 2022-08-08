@@ -2,11 +2,9 @@
 
 ---
 
-Terraform Provider
-==================
+# Terraform Provider
 
-Publish
--------
+## Publish
 
 Packages for version and different os_architecture are generated with `.goreleaser.yaml`, triggered by pushing a new `git tag`
 
@@ -29,8 +27,9 @@ ex:
 CITIZEN_ADDR=http://localhost:3000  ./citizen-macos-amd64 provider stable mysql 0.0.1 -v
 ```
 
-Usage
------
+---
+
+## Usage
 
 ```hcl
 terraform {
