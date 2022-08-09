@@ -52,6 +52,6 @@ resource "mysql_grant" "test_db1" {
   host       = "%"
   database   = "db"
   table      = "table"
-  privileges = [ "SELECT", "INSERT (`column1`), "UPDATE (`column1`, `column2`, `column3`)""]
+  privileges = [ "SELECT", "INSERT (`column1`)", "UPDATE (`column1`, `column2`, `column3`)"]
 }
 ```
