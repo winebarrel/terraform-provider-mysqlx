@@ -1,3 +1,8 @@
+## 1.10.8 (August 29, 2022)
+
+FEATURES:
+* Updated read complex `grants` ([#2](https://github.com/bitvavo/terraform-provider-mysql/pull/2))
+
 ## 1.10.7 (August 8, 2022)
 
 FEATURES:

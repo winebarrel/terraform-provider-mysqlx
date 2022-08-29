@@ -502,7 +502,7 @@ func showGrants(db *sql.DB, user string) ([]*MySQLGrant, error) {
 		}
 
 		privsStr := m[1]
-		rem1 := regexp.MustCompile("[a-zA-Z]+\\ ?\\([a-zA-Z0-9_,\\ `]+\\)|[a-zA-Z]+")
+		rem1 := regexp.MustCompile("[A-Z]+\\ ?\\([a-zA-Z0-9_,\\ `]+\\)|[A-Z]+ [A-Z]+ [A-Z]+|[A-Z]+ [A-Z]+|[A-Z]+")
 		priv_list := rem1.FindAllString(privsStr, -1)
 
 		privileges := make([]string, len(priv_list))
