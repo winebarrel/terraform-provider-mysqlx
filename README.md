@@ -1,3 +1,7 @@
+Please use https://github.com/petoju/terraform-provider-mysql because it is not maintained.
+
+---
+
 **This repository is an unofficial fork**
 
 ---
