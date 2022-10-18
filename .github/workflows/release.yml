@@ -14,9 +14,11 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'feature/add-complex-grants-support'
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: tf-registry
     steps:
       -
         name: Checkout
@@ -36,12 +38,19 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+      # -
+      #   name: Run GoReleaser
+      #   uses: goreleaser/goreleaser-action@v3
+      #   with:
+      #     version: latest
+      #     args: release
+      #   env:
+      #     GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+      #     GITHUB_TOKEN: ${{ secrets.TOKEN }}
       -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          version: latest
-          args: release --rm-dist
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        name: Test ref name
+        run: echo ${{github.ref_name}}
+      # -
+      #   name: Publish provider
+      #   run: /home/ec2-user/citizen-linux-x64 provider --registry http://localhost:3000 stable mysql ${{ steps.module-version.outputs.data }}
+      #   working-directory: dist
