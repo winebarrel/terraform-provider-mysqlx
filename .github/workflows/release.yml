@@ -18,7 +18,7 @@ on:
       - 'feature/add-complex-grants-support'
 jobs:
   goreleaser:
-    runs-on: tf-registry
+    runs-on: tf-registry-provider-mysql
     steps:
       -
         name: Checkout
